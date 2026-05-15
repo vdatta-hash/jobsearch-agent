@@ -1,0 +1,16 @@
+# Environments
+.env
+*.env
+env/
+venv/
+ENV/
+
+# Data / Sensitive
+Profile.csv
+*.csv
+*.zip
+
+# OS files
+.DS_Store
+__pycache__/
+*.pyc
