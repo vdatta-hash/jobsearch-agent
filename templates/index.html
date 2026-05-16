@@ -9,18 +9,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient-start: #0b0f19;
-            --bg-gradient-end: #05070c;
-            --card-bg: rgba(17, 24, 39, 0.7);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --accent-primary: #6366f1;
-            --accent-primary-glow: rgba(99, 102, 241, 0.15);
-            --accent-secondary: #3b82f6;
+            --bg-gradient-start: #f8fafc;
+            --bg-gradient-end: #f1f5f9;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --accent-primary: #4f46e5;
+            --accent-primary-glow: rgba(79, 70, 229, 0.08);
+            --accent-secondary: #2563eb;
             --accent-success: #10b981;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --text-header: #ffffff;
-            --input-bg: rgba(5, 7, 12, 0.6);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --text-header: #0f172a;
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
         }
 
         * {
@@ -37,22 +41,22 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem 1rem;
+            padding: 3rem 1rem;
             overflow-x: hidden;
         }
 
         header {
             width: 100%;
             max-width: 1280px;
-            margin-bottom: 2.5rem;
+            margin-bottom: 3rem;
             text-align: center;
         }
 
         h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 2.5rem;
+            font-size: 2.75rem;
             font-weight: 700;
-            background: linear-gradient(to right, #a5b4fc, #6366f1, #3b82f6);
+            background: linear-gradient(to right, #4f46e5, #2563eb, #06b6d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
@@ -62,15 +66,15 @@
         p.subtitle {
             color: var(--text-muted);
             font-size: 1.1rem;
-            font-weight: 400;
+            font-weight: 500;
         }
 
         main {
             width: 100%;
             max-width: 1280px;
             display: grid;
-            grid-template-columns: 1.1fr 1.2fr;
-            gap: 2rem;
+            grid-template-columns: 1.15fr 1.2fr;
+            gap: 2.5rem;
             align-items: start;
         }
 
@@ -84,55 +88,126 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 16px;
-            padding: 2rem;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card:hover {
-            border-color: rgba(99, 102, 241, 0.25);
-            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.05);
+            border-color: rgba(79, 70, 229, 0.2);
+            box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.07);
         }
 
         .section-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.4rem;
+            font-size: 1.45rem;
             font-weight: 600;
             color: var(--text-header);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.75rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            border-bottom: 1.5px solid var(--card-border);
+            padding-bottom: 0.75rem;
         }
 
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         label {
             display: block;
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.8rem;
+            font-weight: 600;
             color: var(--text-muted);
             margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        textarea, input {
+        /* File Upload Area Styling */
+        .file-drop-area {
+            border: 2px dashed var(--input-border);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            position: relative;
+        }
+
+        .file-drop-area.dragover {
+            border-color: var(--accent-primary);
+            background-color: rgba(79, 70, 229, 0.03);
+        }
+
+        .file-drop-area input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-drop-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 0.75rem auto;
+            stroke: var(--text-muted);
+            transition: stroke 0.3s ease;
+        }
+
+        .file-drop-area:hover .file-drop-icon {
+            stroke: var(--accent-primary);
+        }
+
+        .file-drop-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .file-drop-subtext {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .active-profile-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #065f46;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.75rem;
+        }
+
+        .active-profile-badge span {
+            font-weight: 600;
+        }
+
+        textarea, input[type="text"] {
             width: 100%;
             background: var(--input-bg);
-            border: 1px solid var(--card-border);
+            border: 1px solid var(--input-border);
             border-radius: 8px;
             padding: 0.75rem 1rem;
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
             font-size: 0.95rem;
+            box-shadow: var(--shadow-sm);
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        textarea:focus, input:focus {
+        textarea:focus, input[type="text"]:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px var(--accent-primary-glow);
@@ -140,7 +215,7 @@
 
         textarea {
             resize: vertical;
-            min-height: 160px;
+            min-height: 100px;
         }
 
         .btn {
@@ -159,8 +234,8 @@
             font-weight: 600;
             cursor: pointer;
             transition: opacity 0.2s ease, transform 0.2s ease;
-            margin-top: 1.5rem;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            margin-top: 1.75rem;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
         }
 
         .btn:hover {
@@ -187,9 +262,10 @@
             height: 350px;
             color: var(--text-muted);
             text-align: center;
-            border: 1px dashed var(--card-border);
+            border: 2px dashed var(--card-border);
             border-radius: 12px;
             padding: 2rem;
+            background: #f8fafc;
         }
 
         .output-placeholder svg {
@@ -211,7 +287,7 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
+            border: 3.5px solid rgba(79, 70, 229, 0.1);
             border-radius: 50%;
             border-top-color: var(--accent-primary);
             animation: spin 1s ease-in-out infinite;
@@ -225,7 +301,7 @@
         .loading-status {
             font-family: 'Outfit', sans-serif;
             font-size: 1.2rem;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--text-header);
             margin-bottom: 0.5rem;
         }
@@ -240,12 +316,14 @@
         }
 
         .recruiter-card {
-            background: rgba(255, 255, 255, 0.02);
+            background: #f8fafc;
             border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 0 12px 12px 0;
+            padding: 1.75rem;
+            margin-bottom: 2.25rem;
             line-height: 1.6;
+            box-shadow: var(--shadow-sm);
         }
 
         .recruiter-header {
@@ -253,50 +331,53 @@
             align-items: center;
             gap: 0.5rem;
             color: var(--accent-primary);
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 0.75rem;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
         .query-badge {
             display: inline-block;
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #60a5fa;
+            background: rgba(37, 99, 235, 0.06);
+            border: 1px solid rgba(37, 99, 235, 0.15);
+            color: var(--accent-secondary);
             font-size: 0.85rem;
             font-family: monospace;
-            padding: 0.25rem 0.6rem;
-            border-radius: 4px;
+            font-weight: 600;
+            padding: 0.3rem 0.65rem;
+            border-radius: 6px;
             margin-top: 0.5rem;
         }
 
         .job-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.25rem;
         }
 
         .job-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: #ffffff;
             border: 1px solid var(--card-border);
             border-radius: 12px;
-            padding: 1.25rem;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            transition: transform 0.2s ease, background 0.2s ease;
+            gap: 0.6rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
 
         .job-card:hover {
-            transform: translateX(4px);
-            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+            border-color: rgba(79, 70, 229, 0.15);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05), 0 3px 6px -2px rgba(0, 0, 0, 0.03);
         }
 
         .job-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: var(--text-header);
         }
@@ -304,32 +385,33 @@
         .job-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 1.25rem;
             font-size: 0.85rem;
             color: var(--text-muted);
+            font-weight: 500;
         }
 
         .meta-item {
             display: flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.35rem;
         }
 
         .job-link {
             align-self: flex-start;
             font-size: 0.9rem;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--accent-primary);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 0.25rem;
-            margin-top: 0.5rem;
+            margin-top: 0.6rem;
             transition: color 0.2s ease;
         }
 
         .job-link:hover {
-            color: #818cf8;
+            color: var(--accent-secondary);
             text-decoration: underline;
         }
     </style>
@@ -350,9 +432,24 @@
             </h2>
             
             <form id="search-form" onsubmit="runAnalysis(event)">
+                <!-- CSV File Input Area -->
                 <div class="form-group">
-                    <label for="profile_text">LinkedIn Profile Text (Parsed CSV / Raw paste)</label>
-                    <textarea id="profile_text" placeholder="Paste your profile details or write your background here..." required>{{ profile_text }}</textarea>
+                    <label>LinkedIn Profile (CSV File)</label>
+                    <div class="file-drop-area" id="drop-area">
+                        <svg class="file-drop-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+                        </svg>
+                        <div class="file-drop-text" id="file-name-display">Choose a CSV file or drag it here</div>
+                        <div class="file-drop-subtext">Only .csv files are supported</div>
+                        <input type="file" id="profile_file" name="profile_file" accept=".csv" onchange="handleFileSelect(this)">
+                    </div>
+                    
+                    {% if profile_text %}
+                    <div class="active-profile-badge" id="active-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Active profile: <span>Profile.csv</span> (loaded)
+                    </div>
+                    {% endif %}
                 </div>
 
                 <div class="form-group">
@@ -367,7 +464,7 @@
 
                 <div class="form-group">
                     <label for="role_type">Role Type & Constraints</label>
-                    <textarea id="role_type" style="min-height: 80px;" required>{{ preferences.role_type }}</textarea>
+                    <textarea id="role_type" required>{{ preferences.role_type }}</textarea>
                 </div>
 
                 <div class="form-group">
@@ -399,8 +496,8 @@
                 <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 21l8.982-11.795m-8.982 6.698 1.267-4.813m-1.267 4.813a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM22.782 8.19 19.44 5.36a2.25 2.25 0 0 0-3.13 0l-8.983 8.983L4 21l4.828-3.328 8.983-8.983a2.25 2.25 0 0 0 0-3.13Z" />
                 </svg>
-                <h3>Ready for Analysis</h3>
-                <p style="margin-top: 0.5rem; font-size: 0.9rem; max-width: 280px;">Provide your profile text and click 'Run' to fetch recruiters strategy and dynamic matching jobs.</p>
+                <h3 style="color: var(--text-header);">Ready for Analysis</h3>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem; max-width: 280px;">Select a profile CSV file and click 'Run' to fetch recruiters strategy and dynamic matching jobs.</p>
             </div>
 
             <!-- Spinner Loader -->
@@ -417,15 +514,15 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         Recruiter Evaluation
                     </div>
-                    <p id="analysis-text" style="font-size: 0.98rem; font-weight: 400;"></p>
+                    <p id="analysis-text" style="font-size: 0.98rem; font-weight: 450;"></p>
                     
                     <div style="margin-top: 1.25rem;">
-                        <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block;">Formulated Query:</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Formulated Query:</span>
                         <span id="query-badge" class="query-badge">"Director" Sales Engineering</span>
                     </div>
                 </div>
 
-                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; margin-bottom: 1rem; color: var(--text-header);">Matching High-Match Roles</h3>
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; margin-bottom: 1.25rem; color: var(--text-header);">Matching High-Match Roles</h3>
                 <div class="job-list" id="job-list-container">
                     <!-- Dynamic Job Cards -->
                 </div>
@@ -434,6 +531,40 @@
     </main>
 
     <script>
+        // Handle visual dragover effects for file uploader
+        const dropArea = document.getElementById('drop-area');
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+            }, false);
+        });
+
+        function handleFileSelect(input) {
+            const fileDisplay = document.getElementById('file-name-display');
+            if (input.files && input.files[0]) {
+                fileDisplay.innerText = input.files[0].name;
+                fileDisplay.style.color = 'var(--accent-primary)';
+                
+                // Remove the active profile badge if they selected a new one
+                const activeBadge = document.getElementById('active-badge');
+                if (activeBadge) {
+                    activeBadge.style.display = 'none';
+                }
+            } else {
+                fileDisplay.innerText = "Choose a CSV file or drag it here";
+                fileDisplay.style.color = 'var(--text-main)';
+            }
+        }
+
         const statusUpdates = [
             { title: "Reviewing Profile...", sub: "Parsing strengths & capabilities" },
             { title: "Assembling Recruiting Logic...", sub: "Creating specialized LLM recruiters strategy" },
@@ -454,7 +585,7 @@
                 if (index < statusUpdates.length - 1) {
                     index++;
                 } else {
-                    index = Math.max(0, statusUpdates.length - 2); // Loop the search status
+                    index = Math.max(0, statusUpdates.length - 2);
                 }
                 statusTitle.innerText = statusUpdates[index].title;
                 statusSub.innerText = statusUpdates[index].sub;
@@ -464,14 +595,26 @@
         async function runAnalysis(event) {
             event.preventDefault();
 
-            const profileText = document.getElementById('profile_text').value.trim();
-            const preferences = {
-                domain: document.getElementById('domain').value.trim(),
-                seniority_level: document.getElementById('seniority_level').value.trim(),
-                role_type: document.getElementById('role_type').value.trim(),
-                location: document.getElementById('location').value.trim(),
-                optional_keywords: document.getElementById('optional_keywords').value.trim()
-            };
+            const fileInput = document.getElementById('profile_file');
+            const activeBadge = document.getElementById('active-badge');
+            
+            // We need either a selected file OR a previously loaded profile
+            if (!fileInput.files[0] && !activeBadge) {
+                alert("Please select a LinkedIn Profile CSV file before running the analysis.");
+                return;
+            }
+
+            // Assembling multipart form data
+            const formData = new FormData();
+            if (fileInput.files[0]) {
+                formData.append('profile_file', fileInput.files[0]);
+            }
+            
+            formData.append('domain', document.getElementById('domain').value.trim());
+            formData.append('seniority_level', document.getElementById('seniority_level').value.trim());
+            formData.append('role_type', document.getElementById('role_type').value.trim());
+            formData.append('location', document.getElementById('location').value.trim());
+            formData.append('optional_keywords', document.getElementById('optional_keywords').value.trim());
 
             // Reset views
             document.getElementById('placeholder').style.display = 'none';
@@ -487,8 +630,7 @@
             try {
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ profile_text: profileText, preferences: preferences })
+                    body: formData
                 });
 
                 const data = await response.json();

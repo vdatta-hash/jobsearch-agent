@@ -122,7 +122,11 @@ def search_linkedin_jobs(profile_text, preferences):
                 print(f"Success! Found management jobs for: '{fallback_query}'")
                 break
                 
-    return jobs
+    return {
+        "analysis": strategy.analysis,
+        "primary_query": strategy.primary_query,
+        "jobs": jobs
+    }
 
 def main():
     # Load preferences and target profile
@@ -140,7 +144,8 @@ def main():
         return
 
     # Perform dynamic search based on LLM reasoning and user preferences
-    jobs = search_linkedin_jobs(profile_text, preferences)
+    result = search_linkedin_jobs(profile_text, preferences)
+    jobs = result.get("jobs", [])
 
     # Output Results
     if jobs:

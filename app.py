@@ -55,24 +55,55 @@ def index():
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
     try:
-        data = request.json or {}
-        profile_text = data.get('profile_text', '').strip()
-        preferences = data.get('preferences', {})
-        
-        if not profile_text:
-            return jsonify({'success': False, 'error': 'Profile text cannot be empty.'}), 400
+        # Handle CSV file upload
+        if 'profile_file' in request.files:
+            file = request.files['profile_file']
+            if file.filename == '':
+                return jsonify({'success': False, 'error': 'No selected CSV file.'}), 400
             
-        # Save the updated preferences and profile text locally to persist state
+            # Read and parse CSV in memory
+            import io
+            stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+            reader = csv.DictReader(stream)
+            profile_data = []
+            for row in reader:
+                clean_row = {k: v for k, v in row.items() if v}
+                profile_data.append(str(clean_row))
+            profile_text = "\n".join(profile_data)
+
+            if not profile_text:
+                return jsonify({'success': False, 'error': 'Uploaded CSV was empty or missing columns.'}), 400
+
+            # Save locally as Profile.csv to persist the uploaded file
+            try:
+                file.stream.seek(0)
+                file.save("Profile.csv")
+            except Exception as e:
+                print(f"Warning: Failed to save Profile.csv: {e}")
+
+            # Parse preferences from multipart form
+            preferences = {
+                "domain": request.form.get("domain", "").strip(),
+                "seniority_level": request.form.get("seniority_level", "").strip(),
+                "role_type": request.form.get("role_type", "").strip(),
+                "location": request.form.get("location", "").strip(),
+                "optional_keywords": request.form.get("optional_keywords", "").strip()
+            }
+        else:
+            # Handle JSON payload (fallback / backward compatibility)
+            data = request.json or {}
+            profile_text = data.get('profile_text', '').strip()
+            preferences = data.get('preferences', {})
+            
+            if not profile_text:
+                return jsonify({'success': False, 'error': 'Profile text cannot be empty.'}), 400
+
+        # Save preferences locally
         try:
-            # Save preferences.json
             with open("preferences.json", "w") as pref_file:
                 json.dump(preferences, pref_file, indent=2)
-                
-            # Save a plain text copy of profile text if needed (keep existing Profile.csv untouched)
-            with open("LastProfile.txt", "w", encoding="utf-8") as profile_file:
-                profile_file.write(profile_text)
         except Exception as e:
-            print(f"Warning: Failed to persist preferences locally: {e}")
+            print(f"Warning: Failed to save preferences.json: {e}")
 
         # Run the recruiter analysis and job search
         result = search_linkedin_jobs(profile_text, preferences)
