@@ -19,10 +19,7 @@ class JobSearchStrategy(BaseModel):
     primary_query: str = Field(description="The single best Google Jobs search query (e.g., 'Director Cloud Security').")
     fallback_queries: list[str] = Field(description="A list of 3 to 5 alternative job titles/queries to search if the primary query yields no results.")
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-3-flash-preview", 
-    google_api_key=GOOGLE_API_KEY
-)
+
 
 # ... [Keep your get_profile_summary function exactly as it was] ...
 
@@ -73,6 +70,15 @@ def search_linkedin_jobs(profile_text, preferences):
     2. Formulate the primary job search query to find the best matching jobs.
     3. Formulate 3 to 5 alternative search queries/titles to broaden the search if needed.
     """)
+    
+    google_key = os.getenv("GOOGLE_API_KEY") or GOOGLE_API_KEY
+    if not google_key:
+        raise ValueError("GOOGLE_API_KEY is missing. Please configure it in your Environment Variables.")
+        
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-3-flash-preview", 
+        google_api_key=google_key
+    )
     
     structured_llm = llm.with_structured_output(JobSearchStrategy)
     chain = prompt | structured_llm
