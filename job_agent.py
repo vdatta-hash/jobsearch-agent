@@ -52,30 +52,39 @@ def filter_management_jobs(jobs):
             filtered.append(job)
     return filtered
 
-def search_linkedin_jobs(profile_text):
+import json
+
+def search_linkedin_jobs(profile_text, preferences):
     print("Analyzing profile and generating search strategy...")
     
     prompt = ChatPromptTemplate.from_template("""
     You are an expert executive recruiter and career advisor. Analyze the following user profile:
     {profile}
     
-    Take into account the following specific constraints:
-    - This profile is based in the sales engineering, presales, and solutions architect world.
-    - This is a profile at the mid-management to senior-management level.
-    - The search must strictly target people management and leadership roles (e.g., Manager, Senior Manager, Director, Head of, VP) in pre-sales or post-sales organizations. Absolutely NO individual contributor roles (such as SWE, Software Engineer, Staff Engineer, Principal Architect, Sales Engineer).
-    - The target job location is the United States and/or remote.
-    - The keyword "security" is optional in the search criteria; include it if relevant to a specific role, or omit it to find broader pre-sales/post-sales leadership roles.
+    Take into account the following specific search preferences and constraints:
+    - Target Domain: {domain}
+    - Seniority Level: {seniority_level}
+    - Role Constraints: {role_type}
+    - Target Location: {location}
+    - Optional Keywords: {optional_keywords}
     
     Based on their experience, industry specialization, leadership background, and skills:
-    1. Analyze their core strengths and determine what specific mid-to-senior management roles fit them best.
-    2. Formulate the primary job search query to find the best matching jobs (e.g., include 'remote' if appropriate).
+    1. Analyze their core strengths and determine what specific roles matching the preferences fit them best.
+    2. Formulate the primary job search query to find the best matching jobs.
     3. Formulate 3 to 5 alternative search queries/titles to broaden the search if needed.
     """)
     
     structured_llm = llm.with_structured_output(JobSearchStrategy)
     chain = prompt | structured_llm
     
-    strategy = chain.invoke({"profile": profile_text})
+    strategy = chain.invoke({
+        "profile": profile_text,
+        "domain": preferences.get("domain"),
+        "seniority_level": preferences.get("seniority_level"),
+        "role_type": preferences.get("role_type"),
+        "location": preferences.get("location"),
+        "optional_keywords": preferences.get("optional_keywords")
+    })
     
     print(f"\n--- Recruiter Analysis ---\n{strategy.analysis}\n")
     print(f"Primary Search Query: '{strategy.primary_query}'")
@@ -83,7 +92,7 @@ def search_linkedin_jobs(profile_text):
     params = {
         "engine": "google_jobs",
         "q": strategy.primary_query,
-        "location": "United States",
+        "location": preferences.get("location", "United States"),
         "api_key": SERPAPI_API_KEY,
         "hl": "en",
         "gl": "us"
@@ -101,7 +110,7 @@ def search_linkedin_jobs(profile_text):
             fallback_params = {
                 "engine": "google_jobs",
                 "q": fallback_query,
-                "location": "United States",
+                "location": preferences.get("location", "United States"),
                 "api_key": SERPAPI_API_KEY,
                 "gl": "us",
                 "hl": "en"
@@ -116,13 +125,22 @@ def search_linkedin_jobs(profile_text):
     return jobs
 
 def main():
-    profile_text = get_profile_summary("Profile.csv")
-    if not profile_text:
-        print("Could not load profile data. Exiting.")
+    # Load preferences and target profile
+    try:
+        with open("preferences.json", "r") as pref_file:
+            preferences = json.load(pref_file)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading 'preferences.json': {e}")
         return
 
-    # Perform dynamic search based on LLM reasoning
-    jobs = search_linkedin_jobs(profile_text)
+    profile_file = preferences.get("profile_file", "Profile.csv")
+    profile_text = get_profile_summary(profile_file)
+    if not profile_text:
+        print(f"Could not load profile data from '{profile_file}'. Exiting.")
+        return
+
+    # Perform dynamic search based on LLM reasoning and user preferences
+    jobs = search_linkedin_jobs(profile_text, preferences)
 
     # Output Results
     if jobs:
