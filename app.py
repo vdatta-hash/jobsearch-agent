@@ -111,6 +111,9 @@ def analyze():
         return jsonify({
             'success': True,
             'analysis': result.get('analysis'),
+            'target_domains': result.get('target_domains', []),
+            'seniority_level': result.get('seniority_level', ''),
+            'target_locations': result.get('target_locations', []),
             'primary_query': result.get('primary_query'),
             'jobs': result.get('jobs', [])
         })

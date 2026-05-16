@@ -16,6 +16,9 @@ SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
 # --- Configuration ---
 class JobSearchStrategy(BaseModel):
     analysis: str = Field(description="Brief analysis of the user's background, core strengths, and ideal seniority/roles.")
+    target_domains: list[str] = Field(description="Key target domain areas deduced from the profile and preferences (e.g. ['Cloud Security', 'Customer Engineering']).")
+    seniority_level: str = Field(description="Seniority tier target level (e.g. 'Director / Senior Manager').")
+    target_locations: list[str] = Field(description="Hierarchical target locations (e.g. ['San Francisco Bay Area', 'United States']).")
     primary_query: str = Field(description="The single best Google Jobs search query (e.g., 'Director Cloud Security').")
     fallback_queries: list[str] = Field(description="A list of 3 to 5 alternative job titles/queries to search if the primary query yields no results.")
 
@@ -156,6 +159,9 @@ def search_linkedin_jobs(profile_text, preferences):
             
     return {
         "analysis": strategy.analysis,
+        "target_domains": strategy.target_domains,
+        "seniority_level": strategy.seniority_level,
+        "target_locations": strategy.target_locations,
         "primary_query": f"{strategy.primary_query} ({successful_loc or 'No match'})",
         "jobs": jobs
     }

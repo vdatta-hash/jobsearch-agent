@@ -514,10 +514,30 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         Recruiter Evaluation
                     </div>
-                    <p id="analysis-text" style="font-size: 0.98rem; font-weight: 450;"></p>
+                    <p id="analysis-text" style="font-size: 0.98rem; font-weight: 450; line-height: 1.6;"></p>
                     
-                    <div style="margin-top: 1.25rem;">
-                        <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Formulated Query:</span>
+                    <!-- Structured Recruiter Insights badges -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; margin-bottom: 1.5rem; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 1.25rem;">
+                        <div style="flex: 1 1 45%; min-width: 200px;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 0.02em;">Target Domain Areas</span>
+                            <div id="analysis-domains" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">
+                                <!-- badges populated dynamically -->
+                            </div>
+                        </div>
+                        <div style="flex: 1 1 45%; min-width: 200px;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 0.02em;">Seniority Level Target</span>
+                            <span id="analysis-seniority" style="font-size: 0.95rem; font-weight: 600; color: var(--text-header); display: block; margin-top: 0.5rem;">-</span>
+                        </div>
+                        <div style="flex: 1 1 100%; margin-top: 0.25rem;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 0.02em;">Preferred Location Hierarchy</span>
+                            <div id="analysis-locations" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">
+                                <!-- location tags -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.25rem; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 1rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 0.02em;">Formulated Search Query:</span>
                         <span id="query-badge" class="query-badge">"Director" Sales Engineering</span>
                     </div>
                 </div>
@@ -643,6 +663,46 @@
                     // Populate Recruiter Evaluation
                     document.getElementById('analysis-text').innerText = data.analysis;
                     document.getElementById('query-badge').innerText = data.primary_query;
+
+                    // Populate target domains
+                    const domainContainer = document.getElementById('analysis-domains');
+                    domainContainer.innerHTML = '';
+                    if (data.target_domains && data.target_domains.length > 0) {
+                        data.target_domains.forEach(domain => {
+                            const span = document.createElement('span');
+                            span.className = 'badge';
+                            span.style = 'font-size: 0.78rem; background: rgba(79, 70, 229, 0.06); border: 1px solid rgba(79, 70, 229, 0.12); color: var(--accent-primary); padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 600;';
+                            span.innerText = domain;
+                            domainContainer.appendChild(span);
+                        });
+                    } else {
+                        domainContainer.innerHTML = '<span style="font-size: 0.85rem; color: var(--text-muted);">None deduced</span>';
+                    }
+
+                    // Populate seniority level
+                    document.getElementById('analysis-seniority').innerText = data.seniority_level || 'Not specified';
+
+                    // Populate location hierarchy
+                    const locationContainer = document.getElementById('analysis-locations');
+                    locationContainer.innerHTML = '';
+                    if (data.target_locations && data.target_locations.length > 0) {
+                        data.target_locations.forEach((loc, idx) => {
+                            // Add arrow separator
+                            if (idx > 0) {
+                                const arrow = document.createElement('span');
+                                arrow.style = 'color: var(--text-muted); margin: 0 0.25rem; font-size: 0.8rem; font-weight: 700;';
+                                arrow.innerHTML = '➔';
+                                locationContainer.appendChild(arrow);
+                            }
+                            
+                            const span = document.createElement('span');
+                            span.style = 'font-size: 0.78rem; background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 500;';
+                            span.innerText = loc;
+                            locationContainer.appendChild(span);
+                        });
+                    } else {
+                        locationContainer.innerHTML = '<span style="font-size: 0.85rem; color: var(--text-muted);">None deduced</span>';
+                    }
 
                     // Render Jobs
                     const jobList = document.getElementById('job-list-container');
