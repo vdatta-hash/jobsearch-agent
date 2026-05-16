@@ -65,9 +65,9 @@ def analyze():
             if file.filename == '':
                 return jsonify({'success': False, 'error': 'No selected CSV file.'}), 400
             
-            # Read and parse CSV in memory
-            import io
-            stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+            raw_content = file.stream.read()
+            decoded_content = raw_content.decode("UTF-8") if isinstance(raw_content, bytes) else raw_content
+            stream = io.StringIO(decoded_content, newline=None)
             reader = csv.DictReader(stream)
             profile_data = []
             for row in reader:

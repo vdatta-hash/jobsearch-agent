@@ -24,4 +24,4 @@ COPY . .
 EXPOSE 5000
 
 # Run the production server, dynamically binding to GCP's PORT env variable (defaults to 5000 if not set)
-CMD ["sh", "-c", "gunicorn -w 2 -b 0.0.0.0:${PORT:-5000} app:app"]
+CMD ["sh", "-c", "gunicorn --timeout 120 -w 2 -b 0.0.0.0:${PORT:-5000} app:app"]
