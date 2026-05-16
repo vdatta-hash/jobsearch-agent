@@ -713,13 +713,18 @@
                             const card = document.createElement('div');
                             card.className = 'job-card';
 
-                            const link = (job.apply_options && job.apply_options[0] ? job.apply_options[0].link : '') || 
-                                         job.share_link || job.job_link || 
-                                         '';
+                            const link = job.job_link || '';
+                            const sourceColor = job.source === 'LinkedIn' ? '#0a66c2' : 'var(--accent-primary)';
+                            const sourceBg = job.source === 'LinkedIn' ? 'rgba(10, 102, 194, 0.08)' : 'rgba(79, 70, 229, 0.08)';
 
                             card.innerHTML = `
-                                <div class="job-title">${job.title}</div>
-                                <div class="job-meta">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.35rem;">
+                                    <div class="job-title" style="margin-bottom: 0; max-width: 75%;">${job.title}</div>
+                                    <span style="font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 4px; background: ${sourceBg}; color: ${sourceColor}; text-transform: uppercase; letter-spacing: 0.03em;">
+                                        ${job.source || 'Google Jobs'}
+                                    </span>
+                                </div>
+                                <div class="job-meta" style="margin-top: 0.5rem;">
                                     <div class="meta-item">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                                         ${job.company_name || 'Unknown Company'}

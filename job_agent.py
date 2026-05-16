@@ -53,9 +53,9 @@ def filter_management_jobs(jobs):
             filtered.append(job)
     return filtered
 
-def fetch_serpapi_jobs(query, location):
+def fetch_serpapi_jobs(engine, query, location):
     params = {
-        "engine": "google_jobs",
+        "engine": engine,
         "q": query,
         "location": location,
         "api_key": SERPAPI_API_KEY,
@@ -64,11 +64,54 @@ def fetch_serpapi_jobs(query, location):
     }
     try:
         response = requests.get("https://serpapi.com/search", params=params, timeout=10)
-        jobs = filter_management_jobs(response.json().get("jobs_results", []))
-        return {"query": query, "location": location, "jobs": jobs}
+        raw_jobs = response.json().get("jobs_results", [])
+        
+        # Filter out individual contributor roles
+        jobs = filter_management_jobs(raw_jobs)
+        
+        # Normalize fields so both engines output unified structure
+        normalized = []
+        for job in jobs:
+            apply_link = (
+                job.get("link") or 
+                job.get("job_link") or 
+                (job.get("apply_options", [{}])[0].get("link") if job.get("apply_options") else None)
+            )
+            normalized.append({
+                "title": job.get("title"),
+                "company_name": job.get("company_name"),
+                "location": job.get("location"),
+                "job_link": apply_link,
+                "source": "LinkedIn" if engine == "linkedin_jobs" else "Google Jobs"
+            })
+        return {"engine": engine, "query": query, "location": location, "jobs": normalized}
     except Exception as e:
-        print(f"Error fetching '{query}' in '{location}': {e}")
-        return {"query": query, "location": location, "jobs": []}
+        print(f"Error fetching '{query}' via {engine} in '{location}': {e}")
+        return {"engine": engine, "query": query, "location": location, "jobs": []}
+
+def deduplicate_jobs(google_jobs, linkedin_jobs):
+    seen = set()
+    deduped = []
+    
+    # Add Google Jobs first
+    for job in google_jobs:
+        title = job.get("title", "").strip().lower()
+        company = job.get("company_name", "").strip().lower()
+        key = (title, company)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(job)
+            
+    # Add LinkedIn Jobs
+    for job in linkedin_jobs:
+        title = job.get("title", "").strip().lower()
+        company = job.get("company_name", "").strip().lower()
+        key = (title, company)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(job)
+            
+    return deduped
 
 import json
 
@@ -131,29 +174,48 @@ def search_linkedin_jobs(profile_text, preferences):
         
         # Formulate parallel queries to run concurrently (primary + up to 3 fallback queries)
         queries_to_check = [strategy.primary_query] + strategy.fallback_queries[:3]
-        print(f"Executing concurrent SerpApi searches for queries: {queries_to_check} in '{loc}'...")
+        
+        # We want to search BOTH google_jobs and linkedin_jobs in parallel!
+        print(f"Executing parallel dual-engine (Google & LinkedIn) searches in '{loc}'...")
         
         loc_jobs_map = {}
-        with ThreadPoolExecutor(max_workers=len(queries_to_check)) as executor:
+        
+        # Setup execution pool tasks
+        tasks = []
+        for q in queries_to_check:
+            tasks.append(("google_jobs", q))
+            tasks.append(("linkedin_jobs", q))
+            
+        with ThreadPoolExecutor(max_workers=len(tasks)) as executor:
             futures = {
-                executor.submit(fetch_serpapi_jobs, q, loc): q 
-                for q in queries_to_check
+                executor.submit(fetch_serpapi_jobs, engine, q, loc): (engine, q)
+                for engine, q in tasks
             }
             for future in as_completed(futures):
                 res = future.result()
+                engine = res["engine"]
                 q = res["query"]
                 found = res["jobs"]
+                
                 if found:
-                    loc_jobs_map[q] = found
+                    if q not in loc_jobs_map:
+                        loc_jobs_map[q] = []
+                    loc_jobs_map[q].extend(found)
                     
         # Evaluate results in order of query priority (primary query first, followed by fallbacks)
         for q in queries_to_check:
-            if q in loc_jobs_map:
-                jobs = loc_jobs_map[q]
-                successful_loc = loc
-                print(f"Success! Found {len(jobs)} management jobs in '{loc}' for query '{q}'.")
-                break
+            if q in loc_jobs_map and loc_jobs_map[q]:
+                # Separate results to deduplicate
+                google_found = [j for j in loc_jobs_map[q] if j["source"] == "Google Jobs"]
+                linkedin_found = [j for j in loc_jobs_map[q] if j["source"] == "LinkedIn"]
                 
+                combined = deduplicate_jobs(google_found, linkedin_found)
+                if combined:
+                    jobs = combined
+                    successful_loc = loc
+                    print(f"Success! Found {len(jobs)} combined management jobs in '{loc}' for query '{q}'.")
+                    break
+                    
         if jobs:
             break
             
@@ -189,14 +251,10 @@ def main():
     if jobs:
         print(f"\n--- Found {len(jobs)} jobs ---")
         for i, job in enumerate(jobs[:5]):
-            link = (
-                (job.get("apply_options", [{}])[0].get("link") if job.get("apply_options") else None) or
-                job.get("share_link") or 
-                job.get("job_link") or 
-                "Link not available"
-            )
+            link = job.get("job_link") or "Link not available"
             print(f"\nMatch {i+1}: {job.get('title')}")
             print(f"Company: {job.get('company_name')}")
+            print(f"Source: {job.get('source', 'Unknown')}")
             print(f"Link: {link}")
     else:
         print("No jobs found for any target titles. Try widening your location or check back later!")
