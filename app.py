@@ -1,7 +1,7 @@
 import os
 import json
 import csv
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, make_response
 from job_agent import search_linkedin_jobs
 
 app = Flask(__name__)
@@ -50,7 +50,11 @@ def index():
     # Load profile text
     profile_text = load_default_profile()
     
-    return render_template('index.html', preferences=preferences, profile_text=profile_text)
+    response = make_response(render_template('index.html', preferences=preferences, profile_text=profile_text))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
