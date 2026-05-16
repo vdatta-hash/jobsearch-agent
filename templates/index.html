@@ -653,6 +653,17 @@
                     body: formData
                 });
 
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`Server returned status code ${response.status}. Details: ${errText.substring(0, 200)}`);
+                }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const rawText = await response.text();
+                    throw new Error(`Received unexpected non-JSON content from server. Preview: ${rawText.substring(0, 250)}...`);
+                }
+
                 const data = await response.json();
                 
                 clearInterval(statusInterval);
