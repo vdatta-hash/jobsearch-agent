@@ -95,42 +95,68 @@ def search_linkedin_jobs(profile_text, preferences):
     print(f"\n--- Recruiter Analysis ---\n{strategy.analysis}\n")
     print(f"Primary Search Query: '{strategy.primary_query}'")
     
-    params = {
-        "engine": "google_jobs",
-        "q": strategy.primary_query,
-        "location": preferences.get("location", "United States"),
-        "api_key": SERPAPI_API_KEY,
-        "hl": "en",
-        "gl": "us"
-    }
+    # Define hierarchical locations to search
+    primary_loc = preferences.get("location", "San Francisco Bay Area")
+    search_locations = [primary_loc]
+    if "united states" not in primary_loc.lower():
+        search_locations.append("United States")
+        
+    jobs = []
+    successful_loc = None
     
-    response = requests.get("https://serpapi.com/search", params=params)
-    results = response.json()
-    jobs = filter_management_jobs(results.get("jobs_results", []))
-    
-    # Fallback Logic using LLM-generated alternatives
-    if not jobs:
-        print("\nNo jobs found for the primary query (or all were IC roles). Retrying with LLM-suggested alternatives...")
+    # Search sequentially through each location
+    for loc in search_locations:
+        print(f"\nSearching in: '{loc}'...")
+        
+        # Try primary query
+        print(f"Trying primary query: '{strategy.primary_query}' in '{loc}'...")
+        params = {
+            "engine": "google_jobs",
+            "q": strategy.primary_query,
+            "location": loc,
+            "api_key": SERPAPI_API_KEY,
+            "hl": "en",
+            "gl": "us"
+        }
+        try:
+            response = requests.get("https://serpapi.com/search", params=params)
+            jobs = filter_management_jobs(response.json().get("jobs_results", []))
+            if jobs:
+                successful_loc = loc
+                print(f"Success! Found {len(jobs)} management jobs in '{loc}' for primary query.")
+                break
+        except Exception as e:
+            print(f"Error searching primary query in '{loc}': {e}")
+            
+        # Try fallback queries in this location
+        print(f"No jobs found for primary query in '{loc}'. Retrying with fallback queries...")
         for fallback_query in strategy.fallback_queries:
-            print(f"Trying fallback: '{fallback_query}'...")
+            print(f"Trying fallback: '{fallback_query}' in '{loc}'...")
             fallback_params = {
                 "engine": "google_jobs",
                 "q": fallback_query,
-                "location": preferences.get("location", "United States"),
+                "location": loc,
                 "api_key": SERPAPI_API_KEY,
                 "gl": "us",
                 "hl": "en"
             }
-            response = requests.get("https://serpapi.com/search", params=fallback_params)
-            fallback_jobs = filter_management_jobs(response.json().get("jobs_results", []))
-            if fallback_jobs:
-                jobs = fallback_jobs
-                print(f"Success! Found management jobs for: '{fallback_query}'")
-                break
+            try:
+                response = requests.get("https://serpapi.com/search", params=fallback_params)
+                fallback_jobs = filter_management_jobs(response.json().get("jobs_results", []))
+                if fallback_jobs:
+                    jobs = fallback_jobs
+                    successful_loc = loc
+                    print(f"Success! Found {len(jobs)} management jobs in '{loc}' for fallback query '{fallback_query}'.")
+                    break
+            except Exception as e:
+                print(f"Error searching fallback query '{fallback_query}' in '{loc}': {e}")
                 
+        if jobs:
+            break
+            
     return {
         "analysis": strategy.analysis,
-        "primary_query": strategy.primary_query,
+        "primary_query": f"{strategy.primary_query} ({successful_loc or 'No match'})",
         "jobs": jobs
     }
 
