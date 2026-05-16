@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 load_dotenv("linkedin_agent.env")
 
@@ -51,6 +52,23 @@ def filter_management_jobs(jobs):
         if any(mk in title for mk in management_keywords):
             filtered.append(job)
     return filtered
+
+def fetch_serpapi_jobs(query, location):
+    params = {
+        "engine": "google_jobs",
+        "q": query,
+        "location": location,
+        "api_key": SERPAPI_API_KEY,
+        "hl": "en",
+        "gl": "us"
+    }
+    try:
+        response = requests.get("https://serpapi.com/search", params=params, timeout=10)
+        jobs = filter_management_jobs(response.json().get("jobs_results", []))
+        return {"query": query, "location": location, "jobs": jobs}
+    except Exception as e:
+        print(f"Error fetching '{query}' in '{location}': {e}")
+        return {"query": query, "location": location, "jobs": []}
 
 import json
 
@@ -111,48 +129,30 @@ def search_linkedin_jobs(profile_text, preferences):
     for loc in search_locations:
         print(f"\nSearching in: '{loc}'...")
         
-        # Try primary query
-        print(f"Trying primary query: '{strategy.primary_query}' in '{loc}'...")
-        params = {
-            "engine": "google_jobs",
-            "q": strategy.primary_query,
-            "location": loc,
-            "api_key": SERPAPI_API_KEY,
-            "hl": "en",
-            "gl": "us"
-        }
-        try:
-            response = requests.get("https://serpapi.com/search", params=params)
-            jobs = filter_management_jobs(response.json().get("jobs_results", []))
-            if jobs:
-                successful_loc = loc
-                print(f"Success! Found {len(jobs)} management jobs in '{loc}' for primary query.")
-                break
-        except Exception as e:
-            print(f"Error searching primary query in '{loc}': {e}")
-            
-        # Try fallback queries in this location
-        print(f"No jobs found for primary query in '{loc}'. Retrying with fallback queries...")
-        for fallback_query in strategy.fallback_queries:
-            print(f"Trying fallback: '{fallback_query}' in '{loc}'...")
-            fallback_params = {
-                "engine": "google_jobs",
-                "q": fallback_query,
-                "location": loc,
-                "api_key": SERPAPI_API_KEY,
-                "gl": "us",
-                "hl": "en"
+        # Formulate parallel queries to run concurrently (primary + up to 3 fallback queries)
+        queries_to_check = [strategy.primary_query] + strategy.fallback_queries[:3]
+        print(f"Executing concurrent SerpApi searches for queries: {queries_to_check} in '{loc}'...")
+        
+        loc_jobs_map = {}
+        with ThreadPoolExecutor(max_workers=len(queries_to_check)) as executor:
+            futures = {
+                executor.submit(fetch_serpapi_jobs, q, loc): q 
+                for q in queries_to_check
             }
-            try:
-                response = requests.get("https://serpapi.com/search", params=fallback_params)
-                fallback_jobs = filter_management_jobs(response.json().get("jobs_results", []))
-                if fallback_jobs:
-                    jobs = fallback_jobs
-                    successful_loc = loc
-                    print(f"Success! Found {len(jobs)} management jobs in '{loc}' for fallback query '{fallback_query}'.")
-                    break
-            except Exception as e:
-                print(f"Error searching fallback query '{fallback_query}' in '{loc}': {e}")
+            for future in as_completed(futures):
+                res = future.result()
+                q = res["query"]
+                found = res["jobs"]
+                if found:
+                    loc_jobs_map[q] = found
+                    
+        # Evaluate results in order of query priority (primary query first, followed by fallbacks)
+        for q in queries_to_check:
+            if q in loc_jobs_map:
+                jobs = loc_jobs_map[q]
+                successful_loc = loc
+                print(f"Success! Found {len(jobs)} management jobs in '{loc}' for query '{q}'.")
+                break
                 
         if jobs:
             break
