@@ -1,6 +1,7 @@
 import os
 import json
 import csv
+import io
 from flask import Flask, render_template, request, jsonify, make_response
 from job_agent import search_linkedin_jobs, generate_tailored_materials
 
