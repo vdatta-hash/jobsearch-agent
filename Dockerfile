@@ -20,8 +20,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Expose port 5000
+# Expose port (documented, but Cloud Run overrides this)
 EXPOSE 5000
 
-# Run the production server
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "app:app"]
+# Run the production server, dynamically binding to GCP's PORT env variable (defaults to 5000 if not set)
+CMD ["sh", "-c", "gunicorn -w 2 -b 0.0.0.0:${PORT:-5000} app:app"]
