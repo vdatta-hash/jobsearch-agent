@@ -653,8 +653,8 @@
                             const card = document.createElement('div');
                             card.className = 'job-card';
 
-                            const link = job.share_link || job.job_link || 
-                                         (job.apply_options && job.apply_options[0] ? job.apply_options[0].link : '') || 
+                            const link = (job.apply_options && job.apply_options[0] ? job.apply_options[0].link : '') || 
+                                         job.share_link || job.job_link || 
                                          '';
 
                             card.innerHTML = `

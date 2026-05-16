@@ -152,9 +152,9 @@ def main():
         print(f"\n--- Found {len(jobs)} jobs ---")
         for i, job in enumerate(jobs[:5]):
             link = (
+                (job.get("apply_options", [{}])[0].get("link") if job.get("apply_options") else None) or
                 job.get("share_link") or 
                 job.get("job_link") or 
-                (job.get("apply_options", [{}])[0].get("link") if job.get("apply_options") else None) or
                 "Link not available"
             )
             print(f"\nMatch {i+1}: {job.get('title')}")
