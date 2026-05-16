@@ -154,5 +154,16 @@ def tailor():
         print(traceback.format_exc())
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    error_trace = traceback.format_exc()
+    print("CRITICAL RUNTIME ERROR:\n", error_trace)
+    return jsonify({
+        'success': False,
+        'error': str(e),
+        'traceback': error_trace
+    }), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
