@@ -2,7 +2,7 @@ import os
 import json
 import csv
 from flask import Flask, render_template, request, jsonify, make_response
-from job_agent import search_linkedin_jobs
+from job_agent import search_linkedin_jobs, generate_tailored_materials
 
 app = Flask(__name__)
 
@@ -127,5 +127,32 @@ def analyze():
         print(traceback.format_exc())
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/tailor', methods=['POST'])
+def tailor():
+    try:
+        data = request.json or {}
+        job_title = data.get("job_title", "").strip()
+        company_name = data.get("company_name", "").strip()
+        job_link = data.get("job_link", "").strip()
+        
+        if not job_title or not company_name:
+            return jsonify({'success': False, 'error': 'job_title and company_name are required.'}), 400
+            
+        # Load profile text from CSV
+        profile_text = load_default_profile()
+        if not profile_text:
+            return jsonify({'success': False, 'error': 'No professional profile found. Please upload Profile.csv on your dashboard first.'}), 400
+            
+        res = generate_tailored_materials(profile_text, job_title, company_name, job_link)
+        return jsonify({
+            'success': True,
+            'tailored_resume_bullets': res.tailored_resume_bullets,
+            'cover_letter': res.cover_letter
+        })
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))

@@ -745,12 +745,17 @@
                                         ${job.location || 'Remote / US'}
                                     </div>
                                 </div>
-                                ${link ? `
-                                    <a href="${link}" target="_blank" rel="noopener noreferrer" class="job-link">
-                                        View Job Posting
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-                                    </a>
-                                ` : ''}
+                                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                                    ${link ? `
+                                        <a href="${link}" target="_blank" rel="noopener noreferrer" class="job-link" style="margin-top: 0; flex: 1; display: flex; justify-content: center; align-items: center; font-size: 0.8rem;">
+                                            View Posting
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 3px;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                        </a>
+                                    ` : ''}
+                                    <button onclick="openApplyAssist('${job.title.replace(/'/g, "\\'")}', '${job.company_name.replace(/'/g, "\\'")}', '${link}')" style="flex: 1; padding: 0.45rem; font-size: 0.8rem; font-weight: 600; border-radius: 8px; border: 1px solid var(--accent-primary); color: var(--accent-primary); background: transparent; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 4px;" onmouseover="this.style.background='rgba(79, 70, 229, 0.04)'" onmouseout="this.style.background='transparent'">
+                                        ⚡ Apply Assist
+                                    </button>
+                                </div>
                             `;
                             jobList.appendChild(card);
                         });
@@ -775,6 +780,246 @@
                 document.getElementById('placeholder').style.display = 'flex';
                 alert("An error occurred during network transmission: " + error.message);
             }
+        }
+    </script>
+
+    <!-- Apply Assist Modal -->
+    <div id="apply-assist-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+        <div style="background: white; width: 90%; max-width: 750px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid rgba(0, 0, 0, 0.05);">
+            <!-- Modal Header -->
+            <div style="padding: 1.25rem 1.5rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 id="modal-title" style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; color: var(--text-header); margin: 0;">⚡ Apply Assist</h3>
+                    <p id="modal-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Generate custom resume experience bullets and a matching cover letter</p>
+                </div>
+                <button onclick="closeApplyAssist()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.25rem; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <!-- Modal Tabs -->
+            <div style="display: flex; background: #f1f5f9; padding: 0.35rem; border-bottom: 1px solid #e2e8f0; gap: 0.25rem;">
+                <button id="tab-materials-btn" onclick="switchModalTab('materials')" style="flex: 1; padding: 0.5rem; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; background: white; color: var(--accent-primary);">Tailored Application Assets</button>
+                <button id="tab-autofill-btn" onclick="switchModalTab('autofill')" style="flex: 1; padding: 0.5rem; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; background: transparent; color: #64748b;">🚀 One-Click Autofill Tool</button>
+            </div>
+
+            <!-- Modal Scrollable Content -->
+            <div style="padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column;">
+                <!-- Loader for Modal -->
+                <div id="modal-loader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px;">
+                    <div class="spinner" style="width: 40px; height: 40px; margin-bottom: 1rem;"></div>
+                    <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Recruiter AI is drafting your custom materials...</span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Aligning accomplishments and tone</span>
+                </div>
+
+                <!-- Tab 1: Materials Content -->
+                <div id="tab-materials-content" style="display: none; flex-direction: column; gap: 1.5rem;">
+                    <!-- Tailored Bullets -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.85rem; color: var(--text-header); margin: 0; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700;">Tailored Experience Bullets (Add to Resume)</h4>
+                            <button onclick="copyToClipboard('tailored-bullets-text', this)" style="background: none; border: none; color: var(--accent-primary); font-weight: 600; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Copy Bullets
+                            </button>
+                        </div>
+                        <div id="tailored-bullets-text" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; font-size: 0.85rem; line-height: 1.6; color: var(--text-main); font-family: 'Inter', sans-serif; white-space: pre-line;">
+                        </div>
+                    </div>
+
+                    <!-- Tailored Cover Letter -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.85rem; color: var(--text-header); margin: 0; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700;">Personalized Cover Letter</h4>
+                            <button onclick="copyToClipboard('cover-letter-text', this)" style="background: none; border: none; color: var(--accent-primary); font-weight: 600; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Copy Cover Letter
+                            </button>
+                        </div>
+                        <div id="cover-letter-text" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; font-size: 0.85rem; line-height: 1.6; color: var(--text-main); font-family: 'Inter', sans-serif; white-space: pre-line; max-height: 200px; overflow-y: auto;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Autofill Content -->
+                <div id="tab-autofill-content" style="display: none; flex-direction: column; align-items: center; text-align: center; padding: 1.5rem 1rem; gap: 1.25rem;">
+                    <div style="background: rgba(79, 70, 229, 0.06); padding: 1rem; border-radius: 50%; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </div>
+                    
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; color: var(--text-header); margin: 0;">Universal One-Click Application Autofill</h3>
+                    
+                    <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 480px; margin: 0; line-height: 1.5;">
+                        Drag this button directly onto your browser's **Bookmarks Bar**. Open any job application form (Greenhouse, Lever, LinkedIn, etc.), click it, and instantly pre-fill your entire profile & tailored materials!
+                    </p>
+                    
+                    <!-- Bookmarklet Button -->
+                    <a id="bookmarklet-btn" href="#" onclick="alert('Drag me to your bookmarks bar instead of clicking me!'); return false;" style="display: inline-flex; align-items: center; gap: 8px; padding: 0.85rem 1.75rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; font-weight: 700; border-radius: 30px; text-decoration: none; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3); cursor: grab; font-family: 'Outfit', sans-serif; font-size: 0.95rem; border: 2px dashed rgba(255, 255, 255, 0.2);">
+                        🚀 JobAgent Autofill
+                    </a>
+                    
+                    <div style="margin-top: 1.5rem; border-top: 1px solid #e2e8f0; width: 100%; padding-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Drag Instructions:</span>
+                        <ol style="text-align: left; font-size: 0.8rem; color: var(--text-main); margin: 0; padding-left: 1.25rem; line-height: 1.6; max-width: 400px;">
+                            <li>Press **Cmd+Shift+B** (Mac) or **Ctrl+Shift+B** (Windows) to show your browser's Bookmark Bar.</li>
+                            <li>Click and hold the vibrant purple **JobAgent Autofill** button above.</li>
+                            <li>Drag it and drop it onto your Bookmarks Bar.</li>
+                            <li>Navigate to a job application and click it to autofill!</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentJobDetails = {};
+
+        async function openApplyAssist(title, company, link) {
+            const modal = document.getElementById('apply-assist-modal');
+            modal.style.display = 'flex';
+            
+            // Set loading state
+            document.getElementById('modal-loader').style.display = 'flex';
+            document.getElementById('tab-materials-content').style.display = 'none';
+            document.getElementById('tab-autofill-content').style.display = 'none';
+            switchModalTab('materials');
+            
+            try {
+                const response = await fetch('/api/tailor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        job_title: title,
+                        company_name: company,
+                        job_link: link
+                    })
+                });
+                
+                if (!response.ok) {
+                    const txt = await response.text();
+                    throw new Error(txt || 'Tailoring request failed');
+                }
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Populate Bullets
+                    const bulletsText = data.tailored_resume_bullets.map(b => `• ${b}`).join('\n\n');
+                    document.getElementById('tailored-bullets-text').innerText = bulletsText;
+                    
+                    // Populate Cover Letter
+                    document.getElementById('cover-letter-text').innerText = data.cover_letter;
+                    
+                    // Hide Loader, show materials
+                    document.getElementById('modal-loader').style.display = 'none';
+                    document.getElementById('tab-materials-content').style.display = 'flex';
+                    
+                    // Build the dynamic bookmarklet!
+                    const escapedCoverLetter = data.cover_letter.replace(/`/g, "\\`").replace(/\n/g, "\\n");
+                    
+                    const bookmarkletScript = `javascript:(function(){
+  const profile = {
+    firstName: "Varsha",
+    lastName: "Datta",
+    email: "vdatta@google.com",
+    phone: "+1 555-0199",
+    linkedin: "https://linkedin.com/in/vdatta",
+    github: "https://github.com/vdatta-hash",
+    website: "https://github.com/vdatta-hash",
+    summary: \`${escapedCoverLetter}\`
+  };
+  
+  const inputs = document.querySelectorAll('input, textarea, select');
+  inputs.forEach(input => {
+    const name = (input.name || '').toLowerCase();
+    const id = (input.id || '').toLowerCase();
+    const placeholder = (input.placeholder || '').toLowerCase();
+    const label = (input.getAttribute('aria-label') || '').toLowerCase();
+    
+    const isMatch = (key) => name.includes(key) || id.includes(key) || placeholder.includes(key) || label.includes(key);
+    
+    if (isMatch('first') && isMatch('name')) {
+      input.value = profile.firstName;
+    } else if (isMatch('last') && isMatch('name')) {
+      input.value = profile.lastName;
+    } else if (isMatch('name') && !isMatch('first') && !isMatch('last')) {
+      input.value = profile.firstName + ' ' + profile.lastName;
+    } else if (isMatch('email')) {
+      input.value = profile.email;
+    } else if (isMatch('phone') || isMatch('mobile') || isMatch('tel')) {
+      input.value = profile.phone;
+    } else if (isMatch('linkedin')) {
+      input.value = profile.linkedin;
+    } else if (isMatch('github')) {
+      input.value = profile.github;
+    } else if (isMatch('website') || isMatch('portfolio') || isMatch('site')) {
+      input.value = profile.website;
+    } else if (isMatch('summary') || isMatch('cover') || isMatch('about')) {
+      input.value = profile.summary;
+    }
+    
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  alert('JobAgent Autofilled your application successfully! 🎉');
+})();`;
+                    // Clean whitespaces
+                    const minified = bookmarkletScript.replace(/\\s+/g, " ");
+                    document.getElementById('bookmarklet-btn').setAttribute('href', minified);
+                } else {
+                    throw new Error(data.error || 'Unknown error occurred');
+                }
+            } catch (err) {
+                alert("Could not tailor application assets: " + err.message);
+                closeApplyAssist();
+            }
+        }
+
+        function closeApplyAssist() {
+            document.getElementById('apply-assist-modal').style.display = 'none';
+        }
+
+        function switchModalTab(tab) {
+            const materialsBtn = document.getElementById('tab-materials-btn');
+            const autofillBtn = document.getElementById('tab-autofill-btn');
+            const materialsContent = document.getElementById('tab-materials-content');
+            const autofillContent = document.getElementById('tab-autofill-content');
+            const isLoaded = document.getElementById('modal-loader').style.display === 'none';
+
+            if (tab === 'materials') {
+                materialsBtn.style.background = 'white';
+                materialsBtn.style.color = 'var(--accent-primary)';
+                autofillBtn.style.background = 'transparent';
+                autofillBtn.style.color = '#64748b';
+                
+                if (isLoaded) {
+                    materialsContent.style.display = 'flex';
+                }
+                autofillContent.style.display = 'none';
+            } else {
+                autofillBtn.style.background = 'white';
+                autofillBtn.style.color = 'var(--accent-primary)';
+                materialsBtn.style.background = 'transparent';
+                materialsBtn.style.color = '#64748b';
+                
+                materialsContent.style.display = 'none';
+                if (isLoaded) {
+                    autofillContent.style.display = 'flex';
+                }
+            }
+        }
+
+        function copyToClipboard(elementId, btn) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<span>Copied! ✓</span>`;
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 1500);
+            }).catch(err => {
+                alert("Could not copy to clipboard: " + err);
+            });
         }
     </script>
 </body>

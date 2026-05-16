@@ -140,7 +140,7 @@ def search_linkedin_jobs(profile_text, preferences):
         raise ValueError("GOOGLE_API_KEY is missing. Please configure it in your Environment Variables.")
         
     llm = ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview", 
+        model="gemini-2.5-flash", 
         google_api_key=google_key
     )
     
@@ -227,6 +227,50 @@ def search_linkedin_jobs(profile_text, preferences):
         "primary_query": f"{strategy.primary_query} ({successful_loc or 'No match'})",
         "jobs": jobs
     }
+
+class TailoredMaterials(BaseModel):
+    tailored_resume_bullets: list[str] = Field(description="4 to 6 tailored, highly compelling resume experience bullet points that align the user's real achievements with the target role's specifications.")
+    cover_letter: str = Field(description="A custom 200-250 word cover letter highlighting key achievements relevant to the job.")
+
+def generate_tailored_materials(profile_text, job_title, company_name, job_link):
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are an elite executive recruiter and expert CV writer. 
+Your goal is to analyze the user's background profile and the target job specifications, then tailor their resume experience bullets and write a highly compelling cover letter.
+Focus on highlighting matching domain expertise, leadership level, seniority, and key accomplishments.
+Avoid generic filler words; focus on high-impact metrics and responsibilities.
+"""),
+        ("human", """
+### Target Job Info:
+Title: {job_title}
+Company: {company_name}
+Link/Posting: {job_link}
+
+### User Professional Profile:
+{profile_text}
+
+Please output tailored resume bullets and a customized cover letter using the requested structured format.
+""")
+    ])
+    
+    google_key = os.getenv("GOOGLE_API_KEY") or GOOGLE_API_KEY
+    if not google_key:
+        raise ValueError("GOOGLE_API_KEY is missing. Please configure it in your Environment Variables.")
+        
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash", 
+        google_api_key=google_key
+    )
+    
+    structured_llm = llm.with_structured_output(TailoredMaterials)
+    chain = prompt | structured_llm
+    
+    strategy = chain.invoke({
+        "job_title": job_title,
+        "company_name": company_name,
+        "job_link": job_link,
+        "profile_text": profile_text
+    })
+    return strategy
 
 def main():
     # Load preferences and target profile
